@@ -7,9 +7,10 @@ import array
 import aribstr
 from constant import *
 from aribtable import *
+import io
 
-class TransportStreamFile(file):
-    def next(self):
+class TransportStreamFile(io.FileIO):
+    def __next__(self):
         try:
             sync = self.read(1)
             while ord(sync) != 0x47:
@@ -33,13 +34,13 @@ class TransportPacketParser:
         self.count = 0
     def __iter__(self):
         return self
-    def next(self):
+    def __next__(self):
         while True:
             try:
                 return self.queue.pop(0)
             except IndexError:
                 pass
-            b_packet = self.tsfile.next()
+            b_packet = next(self.tsfile)
             self.count += 1
             if not self.debug:
                 if self.count >= READ_PACKETS_MAX:
@@ -54,8 +55,8 @@ class TransportPacketParser:
                         try:
                             t_packet = TransportPacket(header, section.data)
                             self.queue.append(t_packet)
-                        except CRC32MpegError, e:
-                            print >> sys.stderr, 'CRC32MpegError', e
+                        except CRC32MpegError as e:
+                            print('CRC32MpegError', e, file=sys.stderr)
                             self.section_map.pop(header.pid)
                             break
 
@@ -270,7 +271,7 @@ def parseDescriptors(idx, table, t_packet, b_packet):
     while idx < length:
         descriptor_tag = b_packet[idx]        # 8   uimsbf
         descriptor_length = b_packet[idx + 1] # 8   uimsbf
-        if descriptor_tag in iface.keys():
+        if descriptor_tag in list(iface.keys()):
             iface[descriptor_tag](idx, table, t_packet, b_packet)
         idx = idx + 2 + descriptor_length
 
@@ -371,16 +372,17 @@ def compare_service(x, y):
 
 def parse_eit(b_type, service, tsfile, debug):
     # Event Information Table
-    ids = service.keys()
+    ids = list(service.keys())
     event_map = {}
     parser = TransportPacketParser(tsfile, EIT_PID, debug)
     for t_packet in parser:
         if t_packet.eit.service_id in ids:
             parseEvents(t_packet, t_packet.binary_data)
             add_event(b_type, event_map, t_packet)
-    print >> sys.stderr, "EIT: %i packets read" % (parser.count)
-    event_list = event_map.values()
-    event_list.sort(compare_event if b_type == TYPE_DEGITAL else compare_service)
+    print("EIT: %i packets read" % (parser.count), file=sys.stderr)
+    event_list = list(event_map.values())
+    import functools
+    event_list.sort(key=functools.cmp_to_key(compare_event if b_type == TYPE_DEGITAL else compare_service))
     event_list = fix_events(event_list)
     return event_list
 
@@ -397,7 +399,7 @@ def parse_sdt(b_type, tsfile, debug):
                 service_map[service.service_id] = service.descriptors[0].service_name
         if b_type == TYPE_DEGITAL:
             break
-    print >> sys.stderr, "SDT: %i packets read" % (parser.count)
+    print("SDT: %i packets read" % (parser.count), file=sys.stderr)
     return service_map
 
 def parse_ts(b_type, tsfile, debug):

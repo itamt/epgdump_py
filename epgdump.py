@@ -8,7 +8,7 @@ import time
 from constant import *
 
 def usage():
-    print >> sys.stderr, '''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
+    print('''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -b -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -s -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py [-b|-s] -p TRANSPORT_STREAM_ID:SERVICE_ID:EVENT_ID -i INPUT_FILE
@@ -22,11 +22,12 @@ def usage():
   -o, --output      specify xml file
   -p, --print-time  print start time, and end time of specifeid id
   -e, --event-id    output transport_stream_id, servece_id and event_id
-'''
+''', file=sys.stderr)
 
 try: 
     opts, args = getopt.getopt(sys.argv[1:], 'hbsc:dfi:o:p:e', ['help', 'bs', 'cs', 'channel-id=', 'debug', 'format', 'input=', 'output=', 'print-time=', 'event-id'])
-except IndexError, getopt.GetoptError:
+except IndexError as xxx_todo_changeme:
+    getopt.GetoptError = xxx_todo_changeme
     usage()
     sys.exit(1)
 
@@ -90,7 +91,7 @@ else:
             end_time = event.start_time + event.duration
             break
     if start_time == None:
-        print >> sys.stderr, "not found: transport_stream_id=%d service_id=%d event_id=%d" % (transport_stream_id, service_id, event_id)
+        print("not found: transport_stream_id=%d service_id=%d event_id=%d" % (transport_stream_id, service_id, event_id), file=sys.stderr)
         sys.exit(1)
     else:
-        print int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple()))
+        print(int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
