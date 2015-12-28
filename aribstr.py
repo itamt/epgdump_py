@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import array
 import sys
-import StringIO
+import io
 from aribgaiji import *
 # import copy
 
@@ -60,7 +60,7 @@ CODE_SET_DRCS = {
         0x4F:(Code.UNSUPPORTED, 1), # DRCS-15
         0x70:(Code.UNSUPPORTED, 1), # MACRO
         }
-CODE_SET_KEYS = CODE_SET_DRCS.keys() + CODE_SET_G.keys()
+CODE_SET_KEYS = list(CODE_SET_DRCS.keys()) + list(CODE_SET_G.keys())
 
 ARIB_BASE = {
         0x79:0x3C,
@@ -127,8 +127,8 @@ class CodeSetController:
         self.esc_drcs = False
     def degignate(self, code):
         if not code in CODE_SET_KEYS:
-            raise DegignationError, 'esc_seq_count=%i esc_buffer_index=%s code=0x%02X' % (
-                    self.esc_seq_count, self.esc_buffer_index, code)
+            raise DegignationError('esc_seq_count=%i esc_buffer_index=%s code=0x%02X' % (
+                    self.esc_seq_count, self.esc_buffer_index, code))
         if self.esc_drcs:
             self.v_buffer[self.esc_buffer_index] = CODE_SET_DRCS[code]
         else:
@@ -181,8 +181,8 @@ class AribString:
         self.control = CodeSetController()
         self.arib_array = AribArray('B', array)
         self.jis_array = AribArray('B')
-        self.utf_buffer = StringIO.StringIO()
-        self.utf_buffer_symbol = StringIO.StringIO()
+        self.utf_buffer = io.StringIO()
+        self.utf_buffer_symbol = io.StringIO()
         self.split_symbol = False
     def convert_utf_split(self):
         self.split_symbol = True
@@ -197,7 +197,7 @@ class AribString:
         if len(self.jis_array) > 0:
             uni = 'UnicodeDecodeError'
             try:
-                uni = unicode(self.jis_array.tostring(), 'iso-2022-jp').encode('utf-8')
+                uni = str(self.jis_array.tostring(), 'iso-2022-jp')
             except UnicodeDecodeError:
                 pass
             self.utf_buffer.write(uni)
@@ -301,8 +301,8 @@ class AribString:
             elif data == 0x2B:
                 self.control.set_escape(Buffer.G3, False)
             else:
-                raise EscapeSequenceError, 'esc_seq_count=%i data=0x%02X' % (
-                        self.control.esc_seq_count, data)
+                raise EscapeSequenceError('esc_seq_count=%i data=0x%02X' % (
+                        self.control.esc_seq_count, data))
         elif self.control.esc_seq_count == 2:
             if   data == 0x20:
                 self.control.set_escape(None, True)

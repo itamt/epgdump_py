@@ -7,7 +7,8 @@ import xml.dom.minidom
 from constant import *
 
 def get_text(text):
-    return text.decode('utf-8') if text != None else ""
+    #return text.decode('utf-8') if text != None else ""
+    return text if text != None else ""
 
 def create_xml(b_type, channel_id, service, events, filename, pretty_print, output_eid):
 
@@ -23,18 +24,18 @@ def create_xml(b_type, channel_id, service, events, filename, pretty_print, outp
     for el in programme_el_list:
         tv_el.append(el)
 
-    fd = open(filename, 'w')
+    fd = open(filename, encoding='utf-8', mode='w')
     if pretty_print:
         xml_str = xml.etree.ElementTree.tostring(tv_el)
         xml_str = xml.dom.minidom.parseString(xml_str).toprettyxml(indent='  ', encoding='utf-8')
         fd.write(xml_str)
     else:
-        xml.etree.ElementTree.ElementTree(tv_el).write(fd, 'utf-8', ' ')
+        xml.etree.ElementTree.ElementTree(tv_el).write(filename, 'utf-8', ' ')
     fd.close()
 
 def create_channel(b_type, channel_id, service):
     el_list = []
-    for (service_id, service_name) in service.items():
+    for (service_id, service_name) in list(service.items()):
         ch = b_type + str(service_id) if channel_id == None else channel_id
         attr = {'id':ch}
         channel_el = Element('channel', attr)
@@ -75,7 +76,7 @@ def create_programme(channel_id, events, b_type, output_eid):
 
         eed_text = ''
         if event.desc_extend != None:
-            for (k,v) in event.desc_extend.items():
+            for (k,v) in list(event.desc_extend.items()):
                 eed_text += '\n' + get_text(k) + '\n' + get_text(v) + '\n'
 
         desc_el = Element('desc', attr)
