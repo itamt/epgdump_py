@@ -9,19 +9,19 @@ from datetime import datetime, timedelta
 from array import array
 from typing import List, Tuple, Dict, Optional
 
-import aribstr
-from constant import (
+from . import aribstr
+from .constant import (
     READ_PACKETS_MAX, CONTENT_TYPE, TYPE_DEGITAL, EIT_PID, SDT_PID,
     TAG_SED, TAG_EED, TAG_CD, TAG_SD,
 )
-from aribtable import (
+from .aribtable import (
     Section, TransportPacket, TransportPacketHeader,
     Service, Event, Item,
     ServiceDescriptor,
     ContentDescriptor, ContentType, ShortEventDescriptor, ExtendedEventDescriptor,
     CRC32MpegError,
 )
-from customtype import ServiceMap
+from .customtype import ServiceMap
 
 
 class TransportStreamFile(io.FileIO):

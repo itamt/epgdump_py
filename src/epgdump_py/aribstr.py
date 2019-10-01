@@ -4,7 +4,7 @@ import array
 import sys
 import io
 
-from aribgaiji import GAIJI_MAP_TITLE, GAIJI_MAP_OTHER, GAIJI_MAP
+from .aribgaiji import GAIJI_MAP_TITLE, GAIJI_MAP_OTHER, GAIJI_MAP
 
 
 class Code:

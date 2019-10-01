@@ -5,9 +5,9 @@ import time
 import argparse
 from typing import List, Optional
 
-import xmltv
-from parser_ import TransportStreamFile, parse_ts
-from constant import (
+from . import xmltv
+from .parser_ import TransportStreamFile, parse_ts
+from .constant import (
     TYPE_DEGITAL, TYPE_BS, TYPE_CS,
 )
 
@@ -43,7 +43,7 @@ def create_argparser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: List[str]):
+def process(argv: List[str]):
     argparser = create_argparser()
     args = argparser.parse_args(argv)
 
@@ -102,5 +102,9 @@ def main(argv: List[str]):
             print(int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
 
 
+def main():
+    process(sys.argv[1:])
+
+
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()

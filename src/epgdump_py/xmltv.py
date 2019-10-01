@@ -6,8 +6,8 @@ import xml.etree.ElementTree
 import xml.dom.minidom
 from typing import List, Optional
 
-from aribtable import Event
-from customtype import ServiceMap
+from .aribtable import Event
+from .customtype import ServiceMap
 
 
 def get_text(text: Optional[str]) -> str:

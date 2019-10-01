@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from array import array as _array
 
-from constant import (
+from .constant import (
     SDT_PID, CRC_32_MPEG,
 )
 
