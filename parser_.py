@@ -267,18 +267,22 @@ def parseContentDescriptor(idx: int, event: Event, t_packet: TransportPacket, b_
     length = idx + descriptor_length
     content_list = []
     while idx < length:
-        content_nibble_level_1 = 'UNKNOWN'
-        content_nibble_level_2 = 'UNKNOWN'
+        content_nibble_level_1 = 'UNKNOWN'  # 大ジャンル(日本語)
+        content_nibble_level_2 = 'UNKNOWN'  # 小ジャンル(日本語)
+        user_nibble_1: int = (b_packet[idx + 1] >> 4)  # 4 uimsbf
+        user_nibble_2: int = (b_packet[idx + 1] & 0x0F)  # 4 uimsbf
         try:
-            c_map = CONTENT_TYPE[(b_packet[idx] >> 4)]  # 4 uimsbf
-            content_nibble_level_1 = c_map[0]
-            content_nibble_level_2 = c_map[1][(b_packet[idx] & 0x0F)]  # 4 uimsbf
+            if b_packet[idx] >> 4 == 0xE and b_packet[idx] & 0x0F == 0x1:  # CS拡張ジャンル
+                c_map = CONTENT_TYPE[user_nibble_1 | 0x70]
+                content_nibble_level_1 = c_map[0]
+                content_nibble_level_2 = c_map[1][user_nibble_2]
+            else:
+                c_map = CONTENT_TYPE[(b_packet[idx] >> 4)]  # 4 uimsbf
+                content_nibble_level_1 = c_map[0]
+                content_nibble_level_2 = c_map[1][(b_packet[idx] & 0x0F)]  # 4 uimsbf
         except KeyError:
             pass
-        user_nibble_1 = (b_packet[idx + 1] >> 4)  # 4 uimsbf
-        user_nibble_2 = (b_packet[idx + 1] & 0x0F)  # 4 uimsbf
-        content = ContentType(content_nibble_level_1, content_nibble_level_2,
-                              user_nibble_1, user_nibble_2)
+        content = ContentType(content_nibble_level_1, content_nibble_level_2, user_nibble_1, user_nibble_2)
         content_list.append(content)
         idx += 2
     desc = ContentDescriptor(descriptor_tag, descriptor_length, content_list)
