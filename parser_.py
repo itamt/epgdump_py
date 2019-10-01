@@ -271,19 +271,29 @@ def parseContentDescriptor(idx: int, event: Event, t_packet: TransportPacket, b_
         content_nibble_level_2 = 'UNKNOWN'  # 小ジャンル(日本語)
         user_nibble_1: int = (b_packet[idx + 1] >> 4)  # 4 uimsbf
         user_nibble_2: int = (b_packet[idx + 1] & 0x0F)  # 4 uimsbf
+        lv_1_2_hex: Optional[str] = None  # 詳細ジャンル (大ジャンル + 小ジャンル)
         try:
             if b_packet[idx] >> 4 == 0xE and b_packet[idx] & 0x0F == 0x1:  # CS拡張ジャンル
                 c_map = CONTENT_TYPE[user_nibble_1 | 0x70]
                 content_nibble_level_1 = c_map[0]
                 content_nibble_level_2 = c_map[1][user_nibble_2]
+                lv_1 = (user_nibble_1 | 0x70) << 4
+                lv_1_2_hex = '0x{:04X}'.format(lv_1 | user_nibble_2)  # ex. "0x0713"
             else:
                 c_map = CONTENT_TYPE[(b_packet[idx] >> 4)]  # 4 uimsbf
                 content_nibble_level_1 = c_map[0]
                 content_nibble_level_2 = c_map[1][(b_packet[idx] & 0x0F)]  # 4 uimsbf
+                lv_1 = b_packet[idx]
+                lv_1_2_hex = '0x{:04X}'.format(lv_1 | (b_packet[idx] & 0x0F))  # ex. "0x0051"
         except KeyError:
             pass
+        # ジャンル(日本語)
         content = ContentType(content_nibble_level_1, content_nibble_level_2, user_nibble_1, user_nibble_2)
         content_list.append(content)
+        if lv_1_2_hex is not None:
+            # ジャンル(16進数)
+            content = ContentType(lv_1_2_hex, lv_1_2_hex, user_nibble_1, user_nibble_2)  # 詳細ジャンルは大小ジャンルを兼ねているので2回渡す
+            content_list.append(content)
         idx += 2
     desc = ContentDescriptor(descriptor_tag, descriptor_length, content_list)
     event.descriptors.append(desc)
