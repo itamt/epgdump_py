@@ -73,18 +73,18 @@ def main(argv):
         elif o in ('-e', '--event-id'):
             output_eid = True
 
-    if service_id == None and (
-            (b_type == TYPE_DEGITAL and channel_id == None) or input_file == None or output_file == None):
+    if service_id is None and (
+            (b_type == TYPE_DEGITAL and channel_id is None) or input_file is None or output_file is None):
         usage()
         sys.exit(1)
-    elif input_file == None:
+    elif input_file is None:
         usage()
         sys.exit(1)
 
     tsfile = TransportStreamFile(input_file, 'rb')
     (service, events) = parse_ts(b_type, tsfile, debug)
     tsfile.close()
-    if service_id == None:
+    if service_id is None:
         # xmp出力
         xmltv.create_xml(b_type, channel_id, service, events, output_file, pretty_print, output_eid)
     else:
@@ -98,7 +98,7 @@ def main(argv):
                 start_time = event.start_time
                 end_time = event.start_time + event.duration
                 break
-        if start_time == None:
+        if start_time is None:
             print(
                 "not found: transport_stream_id=%d service_id=%d event_id=%d" % (
                 transport_stream_id, service_id, event_id),

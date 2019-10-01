@@ -37,7 +37,7 @@ def create_xml(b_type, channel_id, service, events, filename, pretty_print, outp
 def create_channel(b_type, channel_id, service):
     el_list = []
     for (service_id, service_name) in list(service.items()):
-        ch = b_type + str(service_id) if channel_id == None else channel_id
+        ch = b_type + str(service_id) if channel_id is None else channel_id
         attr = {'id': ch}
         channel_el = Element('channel', attr)
         attr = {'lang': 'ja'}
@@ -64,7 +64,7 @@ def create_programme(channel_id, events, b_type, output_eid):
     el_list = []
     for event in events:
 
-        ch = b_type + str(event.service_id) if channel_id == None else channel_id
+        ch = b_type + str(event.service_id) if channel_id is None else channel_id
         start = event.start_time.strftime(t_format)
         stop = (event.start_time + event.duration).strftime(t_format)
         attr = {'start': start, 'stop': stop, 'channel': ch}

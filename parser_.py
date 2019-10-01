@@ -348,7 +348,7 @@ def add_event(b_type, event_map, t_packet):
         else:
             m_id = (event.transport_stream_id << 32) + (event.service_id << 16) + event.event_id
         master = event_map.get(m_id)
-        if master == None:
+        if master is None:
             master = copy.copy(event)
             master.descriptors = None
             event_map[m_id] = master
@@ -361,7 +361,7 @@ def add_event(b_type, event_map, t_packet):
             elif tag == TAG_CD:
                 master.desc_content = desc
             elif tag == TAG_EED:
-                if master.desc_extend == None:
+                if master.desc_extend is None:
                     master.desc_extend = desc.items
                 else:
                     master.desc_extend.extend(desc.items)
@@ -372,7 +372,7 @@ def fix_events(events):
     for event in events:
         item_list = []
         item_map = {}
-        if event.desc_short == None:  # 正常なら少なくとも基本情報は持つ
+        if event.desc_short is None:  # 正常なら少なくとも基本情報は持つ
             continue
         if event.desc_extend != None:  # 詳細は追加的な情報
             for item in event.desc_extend:
