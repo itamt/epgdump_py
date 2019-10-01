@@ -6,7 +6,7 @@ import argparse
 from typing import List, Optional
 
 from . import xmltv
-from .parser_ import TransportStreamFile, parse_ts
+from .parser import TransportStreamFile, parse_ts
 from .constant import (
     TYPE_DEGITAL, TYPE_BS, TYPE_CS,
 )
