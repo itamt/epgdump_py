@@ -29,14 +29,14 @@ def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, even
     for el in programme_el_list:
         tv_el.append(el)
 
-    fd = open(filename, encoding='utf-8', mode='w')
     if pretty_print:
-        xml_str = xml.etree.ElementTree.tostring(tv_el)
-        xml_str = xml.dom.minidom.parseString(xml_str).toprettyxml(indent='  ', encoding='utf-8')
-        fd.write(xml_str)
+        with open(filename, mode='wb') as fd:
+            xml_str: bytes
+            xml_str = xml.etree.ElementTree.tostring(tv_el)
+            xml_str = xml.dom.minidom.parseString(xml_str).toprettyxml(indent='  ', encoding='utf-8')
+            fd.write(xml_str)
     else:
         xml.etree.ElementTree.ElementTree(tv_el).write(filename, 'utf-8', ' ')
-    fd.close()
 
 
 def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
