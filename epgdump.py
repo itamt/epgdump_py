@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from parser import TransportStreamFile, parse_ts
+from parser_ import TransportStreamFile, parse_ts
 import xmltv
 import sys
 import getopt
