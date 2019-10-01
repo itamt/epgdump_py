@@ -82,15 +82,17 @@ def create_programme(channel_id: Optional[str], events: List[Event], b_type: str
         title_el = create_element('title', attr, text=get_text(event.desc_short.event_name))
         programme_el.append(title_el)
 
-        eed_text = ''
-        if event.desc_extend != None:
-            for (k, v) in list(event.desc_extend.items()):
-                eed_text += '\n' + get_text(k) + '\n' + get_text(v) + '\n'
-
-        desc_el = create_element('desc', attr, text=get_text(event.desc_short.text) + '\n' + eed_text)
+        desc_text = get_text(event.desc_short.text)
+        if event.desc_extend is not None:
+            eed_texts = []
+            for k, v in event.desc_extend.items():
+                eed_texts.append(get_text(k) + '\n' + get_text(v))
+            if eed_texts:
+                desc_text += '\n\n' + '\n'.join(eed_texts)
+        desc_el = create_element('desc', attr, text=desc_text)
         programme_el.append(desc_el)
 
-        if event.desc_content != None:
+        if event.desc_content is not None:
             category_list = []
             for ct in event.desc_content.content_type_array:
                 category_text = get_text(ct.content_nibble_level_1)
