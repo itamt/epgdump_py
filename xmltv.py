@@ -4,19 +4,19 @@ from xml.etree.ElementTree import ElementTree
 from xml.etree.ElementTree import Element
 import xml.etree.ElementTree
 import xml.dom.minidom
-from constant import *
+
 
 def get_text(text):
-    #return text.decode('utf-8') if text != None else ""
+    # return text.decode('utf-8') if text != None else ""
     return text if text != None else ""
 
-def create_xml(b_type, channel_id, service, events, filename, pretty_print, output_eid):
 
+def create_xml(b_type, channel_id, service, events, filename, pretty_print, output_eid):
     channel_el_list = create_channel(b_type, channel_id, service)
     programme_el_list = create_programme(channel_id, events, b_type, output_eid)
     attr = {
-            'generator-info-name':'epgdump_py',
-            'generator-info-url':'mailto:epgdump_py@gmail.com'}
+        'generator-info-name': 'epgdump_py',
+        'generator-info-url': 'mailto:epgdump_py@gmail.com'}
     tv_el = Element('tv', attr)
 
     for el in channel_el_list:
@@ -33,13 +33,14 @@ def create_xml(b_type, channel_id, service, events, filename, pretty_print, outp
         xml.etree.ElementTree.ElementTree(tv_el).write(filename, 'utf-8', ' ')
     fd.close()
 
+
 def create_channel(b_type, channel_id, service):
     el_list = []
     for (service_id, service_name) in list(service.items()):
         ch = b_type + str(service_id) if channel_id == None else channel_id
-        attr = {'id':ch}
+        attr = {'id': ch}
         channel_el = Element('channel', attr)
-        attr = {'lang':'ja'}
+        attr = {'lang': 'ja'}
 
         display_el = Element('display-name', attr)
         display_el.text = get_text(service_name)
@@ -57,6 +58,7 @@ def create_channel(b_type, channel_id, service):
 
     return el_list
 
+
 def create_programme(channel_id, events, b_type, output_eid):
     t_format = '%Y%m%d%H%M%S +0900'
     el_list = []
@@ -65,10 +67,10 @@ def create_programme(channel_id, events, b_type, output_eid):
         ch = b_type + str(event.service_id) if channel_id == None else channel_id
         start = event.start_time.strftime(t_format)
         stop = (event.start_time + event.duration).strftime(t_format)
-        attr = {'start':start, 'stop':stop, 'channel':ch}
+        attr = {'start': start, 'stop': stop, 'channel': ch}
         programme_el = Element('programme', attr)
 
-        attr = {'lang':'ja'}
+        attr = {'lang': 'ja'}
 
         title_el = Element('title', attr)
         title_el.text = get_text(event.desc_short.event_name)
@@ -76,7 +78,7 @@ def create_programme(channel_id, events, b_type, output_eid):
 
         eed_text = ''
         if event.desc_extend != None:
-            for (k,v) in list(event.desc_extend.items()):
+            for (k, v) in list(event.desc_extend.items()):
                 eed_text += '\n' + get_text(k) + '\n' + get_text(v) + '\n'
 
         desc_el = Element('desc', attr)

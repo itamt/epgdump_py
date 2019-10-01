@@ -7,6 +7,7 @@ import getopt
 import time
 from constant import *
 
+
 def usage():
     print('''USAGE: epgdump_py -c CHANNEL_ID -i INPUT_FILE -o OUTPUT_FILE
        epgdump_py -b -i INPUT_FILE -o OUTPUT_FILE
@@ -24,8 +25,11 @@ def usage():
   -e, --event-id    output transport_stream_id, servece_id and event_id
 ''', file=sys.stderr)
 
-try: 
-    opts, args = getopt.getopt(sys.argv[1:], 'hbsc:dfi:o:p:e', ['help', 'bs', 'cs', 'channel-id=', 'debug', 'format', 'input=', 'output=', 'print-time=', 'event-id'])
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], 'hbsc:dfi:o:p:e',
+                               ['help', 'bs', 'cs', 'channel-id=', 'debug', 'format', 'input=', 'output=',
+                                'print-time=', 'event-id'])
 except IndexError as xxx_todo_changeme:
     getopt.GetoptError = xxx_todo_changeme
     usage()
@@ -41,7 +45,7 @@ transport_stream_id = None
 service_id = None
 event_id = None
 output_eid = False
-for o,a in opts:
+for o, a in opts:
     if o in ('-h', '--help'):
         usage()
         sys.exit(0)
@@ -85,13 +89,15 @@ else:
     end_time = None
     for event in events:
         if (event.transport_stream_id == transport_stream_id and
-            event.service_id == service_id and
-            event.event_id == event_id):
+                event.service_id == service_id and
+                event.event_id == event_id):
             start_time = event.start_time
             end_time = event.start_time + event.duration
             break
     if start_time == None:
-        print("not found: transport_stream_id=%d service_id=%d event_id=%d" % (transport_stream_id, service_id, event_id), file=sys.stderr)
+        print(
+            "not found: transport_stream_id=%d service_id=%d event_id=%d" % (transport_stream_id, service_id, event_id),
+            file=sys.stderr)
         sys.exit(1)
     else:
         print(int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
