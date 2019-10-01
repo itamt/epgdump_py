@@ -73,7 +73,7 @@ class TransportPacketParser:
             header = self.parse_header(b_packet)  # パケット先頭4バイト
             if header.pid in self.pid and header.adaptation_field_control == 1:
                 while True:
-                    (next_packet, section) = self.parse_section(header, self.section_map, b_packet)
+                    next_packet, section = self.parse_section(header, self.section_map, b_packet)
                     if next_packet:  # packet ended
                         break
                     if section:
@@ -88,8 +88,8 @@ class TransportPacketParser:
     def parse_header(self, b_packet: array) -> TransportPacketHeader:
         """パケット先頭の4バイトであるヘッダーを返す"""
         pid = ((b_packet[1] & 0x1F) << 8) + b_packet[2]
-        payload_unit_start_indicator = ((b_packet[1] >> 6) & 0x01)
-        adaptation_field_control = ((b_packet[3] >> 4) & 0x03)
+        payload_unit_start_indicator = (b_packet[1] >> 6) & 0x01
+        adaptation_field_control = (b_packet[3] >> 4) & 0x03
         pointer_field = b_packet[4]
         return TransportPacketHeader(pid, payload_unit_start_indicator, adaptation_field_control, pointer_field)
 

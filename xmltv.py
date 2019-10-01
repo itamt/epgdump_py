@@ -11,8 +11,7 @@ from customtype import ServiceMap
 
 
 def get_text(text: Optional[str]) -> str:
-    # return text.decode('utf-8') if text != None else ""
-    return text if text != None else ""
+    return text if text is not None else ''
 
 
 def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, events: List[Event], filename: str,
@@ -40,14 +39,8 @@ def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, even
 
 
 def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
-    def create_element(tag: str, attr: Optional[dict] = None, text: Optional[str] = None) -> Element:
-        el = Element(tag, attr or {})
-        if text is not None:
-            el.text = text
-        return el
-
     el_list = []
-    for (service_id, (service_name, onid, tsid)) in list(service.items()):
+    for service_id, (service_name, onid, tsid) in service.items():
         ch = channel_id or f"{b_type}{service_id}"
         channel_el = create_element('channel', {'id': ch})
 
@@ -79,16 +72,14 @@ def create_programme(channel_id: Optional[str], events: List[Event], b_type: str
     el_list = []
     for event in events:
 
-        ch = b_type + str(event.service_id) if channel_id is None else channel_id
+        ch = channel_id or f"{b_type}{event.service_id}"
         start = event.start_time.strftime(t_format)
         stop = (event.start_time + event.duration).strftime(t_format)
-        attr = {'start': start, 'stop': stop, 'channel': ch}
-        programme_el = Element('programme', attr)
+        programme_el = create_element('programme', {'start': start, 'stop': stop, 'channel': ch})
 
         attr = {'lang': 'ja'}
 
-        title_el = Element('title', attr)
-        title_el.text = get_text(event.desc_short.event_name)
+        title_el = create_element('title', attr, text=get_text(event.desc_short.event_name))
         programme_el.append(title_el)
 
         eed_text = ''
@@ -96,8 +87,7 @@ def create_programme(channel_id: Optional[str], events: List[Event], b_type: str
             for (k, v) in list(event.desc_extend.items()):
                 eed_text += '\n' + get_text(k) + '\n' + get_text(v) + '\n'
 
-        desc_el = Element('desc', attr)
-        desc_el.text = get_text(event.desc_short.text) + '\n' + eed_text
+        desc_el = create_element('desc', attr, text=get_text(event.desc_short.text) + '\n' + eed_text)
         programme_el.append(desc_el)
 
         if event.desc_content != None:
@@ -110,20 +100,23 @@ def create_programme(channel_id: Optional[str], events: List[Event], b_type: str
                 if category_text not in category_list and category_text != 'UNKNOWN':
                     category_list.append(category_text)
             for category_text in category_list:
-                category_el_1 = Element('category', attr)
-                category_el_1.text = category_text
+                category_el_1 = create_element('category', attr, text=category_text)
                 programme_el.append(category_el_1)
-        if output_eid == True:
-            el = Element('transport-stream-id')
-            el.text = str(event.transport_stream_id)
+        if output_eid:
+            el = create_element('transport-stream-id', text=str(event.transport_stream_id))
             programme_el.append(el)
-            el = Element('service-id')
-            el.text = str(event.service_id)
+            el = create_element('service-id', text=str(event.service_id))
             programme_el.append(el)
-            el = Element('event-id')
-            el.text = str(event.event_id)
+            el = create_element('event-id', text=str(event.event_id))
             programme_el.append(el)
 
         el_list.append(programme_el)
 
     return el_list
+
+
+def create_element(tag: str, attr: Optional[dict] = None, text: Optional[str] = None) -> Element:
+    el = Element(tag, attr or {})
+    if text is not None:
+        el.text = text
+    return el
