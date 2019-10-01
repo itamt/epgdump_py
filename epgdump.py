@@ -20,7 +20,7 @@ def usage():
   -f, --format      format xml
   -i, --input       specify ts file
   -o, --output      specify xml file
-  -p, --print-time  print start time, and end time of specifeid id
+  -p, --print-time  print start time, and end time of specified id
   -e, --event-id    output transport_stream_id, servece_id and event_id
 ''', file=sys.stderr)
 
