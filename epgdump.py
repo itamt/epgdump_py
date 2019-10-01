@@ -1,11 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from parser_ import TransportStreamFile, parse_ts
-import xmltv
 import sys
 import getopt
 import time
-from constant import *
+from typing import List
+
+import xmltv
+from parser_ import TransportStreamFile, parse_ts
+from constant import (
+    TYPE_DEGITAL, TYPE_BS, TYPE_CS,
+)
 
 
 def usage():
@@ -26,7 +30,7 @@ def usage():
 ''', file=sys.stderr)
 
 
-def main(argv):
+def main(argv: List[str]):
     try:
         opts, args = getopt.getopt(argv, 'hbsc:dfi:o:p:e',
                                    ['help', 'bs', 'cs', 'channel-id=', 'debug', 'format', 'input=', 'output=',

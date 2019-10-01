@@ -1,13 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import sys
-import datetime
 import copy
-import array
-import aribstr
-from constant import *
-from aribtable import *
 import io
+import os
+import sys
+import functools
+from datetime import datetime, timedelta
+from array import array
+from typing import List, Tuple, Dict, Optional
+
+import aribstr
+from constant import (
+    READ_PACKETS_MAX, CONTENT_TYPE, TYPE_DEGITAL, EIT_PID, SDT_PID,
+    TAG_SED, TAG_EED, TAG_CD, TAG_SD,
+)
+from aribtable import (
+    Section, TransportPacket, TransportPacketHeader,
+    Service, Event, Item,
+    ServiceDescriptor,
+    ContentDescriptor, ContentType, ShortEventDescriptor, ExtendedEventDescriptor,
+    CRC32MpegError,
+)
+from customtype import ServiceMap
 
 
 class TransportStreamFile(io.FileIO):
@@ -20,7 +34,7 @@ class TransportStreamFile(io.FileIO):
         except TypeError:
             raise StopIteration
         data = self.read(187)
-        packet = array.array('B', data)
+        packet = array('B', data)
         packet.insert(0, ord(sync))  # 1 packet = 188 (1+187) Bytes
         if len(packet) != 188:
             raise StopIteration
@@ -30,7 +44,7 @@ class TransportStreamFile(io.FileIO):
 class TransportPacketParser:
     """セクションを含んだパケット単位で回すためのパーサー"""
 
-    def __init__(self, tsfile, pid, debug=False):
+    def __init__(self, tsfile: TransportStreamFile, pid: Tuple[int], debug: bool = False):
         self.tsfile = tsfile
         self.pid = pid
         self.section_map = {}
@@ -71,7 +85,7 @@ class TransportPacketParser:
                             self.section_map.pop(header.pid)
                             break
 
-    def parse_header(self, b_packet):
+    def parse_header(self, b_packet: array) -> TransportPacketHeader:
         """パケット先頭の4バイトであるヘッダーを返す"""
         pid = ((b_packet[1] & 0x1F) << 8) + b_packet[2]
         payload_unit_start_indicator = ((b_packet[1] >> 6) & 0x01)
@@ -79,7 +93,7 @@ class TransportPacketParser:
         pointer_field = b_packet[4]
         return TransportPacketHeader(pid, payload_unit_start_indicator, adaptation_field_control, pointer_field)
 
-    def parse_section(self, header, section_map, b_packet):
+    def parse_section(self, header: TransportPacketHeader, section_map: dict, b_packet: array) -> Tuple[bool, Section]:
         """パケットからセクションを切り出して返す"""
         sect = None
         next_packet = False
@@ -165,7 +179,7 @@ class TransportPacketParser:
         return (next_packet, sect)
 
 
-def mjd2datetime(payload):
+def mjd2datetime(payload: array) -> datetime:
     """Modified Julian Dateをdatetimeに変換"""
     mjd = (payload[0] << 8) | payload[1]
     yy_ = int((mjd - 15078.2) / 365.25)
@@ -178,20 +192,20 @@ def mjd2datetime(payload):
     minute = ((payload[3] & 0xF0) >> 4) * 10 + (payload[3] & 0x0F)
     second = ((payload[4] & 0xF0) >> 4) * 10 + (payload[4] & 0x0F)
     try:
-        return datetime.datetime(year, month, day, hour, minute, second)
+        return datetime(year, month, day, hour, minute, second)
     except ValueError:
-        return datetime.datetime(9999, 1, 1, 1, 1, 1)
+        return datetime(9999, 1, 1, 1, 1, 1)
 
 
-def bcd2time(payload):
+def bcd2time(payload: array) -> timedelta:
     """二進化十進数を時刻に変換"""
     hour = ((payload[0] & 0xF0) >> 4) * 10 + (payload[0] & 0x0F)
     minute = ((payload[1] & 0xF0) >> 4) * 10 + (payload[1] & 0x0F)
     second = ((payload[2] & 0xF0) >> 4) * 10 + (payload[2] & 0x0F)
-    return datetime.timedelta(hours=hour, minutes=minute, seconds=second)
+    return timedelta(hours=hour, minutes=minute, seconds=second)
 
 
-def parseShortEventDescriptor(idx, event, t_packet, b_packet):
+def parseShortEventDescriptor(idx: int, event: Event, t_packet: TransportPacket, b_packet: array) -> None:
     """番組内容(基本情報)をイベントに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
@@ -213,7 +227,7 @@ def parseShortEventDescriptor(idx, event, t_packet, b_packet):
     event.descriptors.append(desc)
 
 
-def parseExtendedEventDescriptor(idx, event, t_packet, b_packet):
+def parseExtendedEventDescriptor(idx: int, event: Event, t_packet: TransportPacket, b_packet: array) -> None:
     """番組内容(詳細)をイベントに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
@@ -245,7 +259,7 @@ def parseExtendedEventDescriptor(idx, event, t_packet, b_packet):
     event.descriptors.append(desc)
 
 
-def parseContentDescriptor(idx, event, t_packet, b_packet):
+def parseContentDescriptor(idx: int, event: Event, t_packet: TransportPacket, b_packet: array) -> None:
     """ジャンルをイベントに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
@@ -271,7 +285,7 @@ def parseContentDescriptor(idx, event, t_packet, b_packet):
     event.descriptors.append(desc)
 
 
-def parseServiceDescriptor(idx, service, t_packet, b_packet):
+def parseServiceDescriptor(idx: int, service: Service, t_packet: TransportPacket, b_packet: array) -> None:
     """局情報をサービスに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
@@ -289,7 +303,7 @@ def parseServiceDescriptor(idx, service, t_packet, b_packet):
     service.descriptors.append(sd)
 
 
-def parseDescriptors(idx, table, t_packet, b_packet):
+def parseDescriptors(idx: int, table: Service, t_packet: TransportPacket, b_packet: array) -> None:
     iface = {
         TAG_SED: parseShortEventDescriptor,
         TAG_EED: parseExtendedEventDescriptor,
@@ -304,7 +318,7 @@ def parseDescriptors(idx, table, t_packet, b_packet):
         idx = idx + 2 + descriptor_length
 
 
-def parseEvents(t_packet, b_packet):
+def parseEvents(t_packet: TransportPacket, b_packet: array) -> None:
     idx = 19
     length = t_packet.eit.section_length - idx
     while idx < length:
@@ -321,7 +335,7 @@ def parseEvents(t_packet, b_packet):
         idx = idx + 12 + descriptors_loop_length
 
 
-def parseService(t_packet, b_packet):
+def parseService(t_packet: TransportPacket, b_packet: array) -> None:
     idx = 16
     length = t_packet.sdt.section_length - idx
     while idx < length:
@@ -343,7 +357,7 @@ def parseService(t_packet, b_packet):
         idx = idx + 5 + descriptors_loop_length
 
 
-def add_event(b_type, event_map, t_packet):
+def add_event(b_type: str, event_map: Dict[int, Event], t_packet: TransportPacket) -> None:
     for event in t_packet.eit.events:
         if b_type == TYPE_DEGITAL:
             m_id = event.event_id
@@ -369,7 +383,7 @@ def add_event(b_type, event_map, t_packet):
                     master.desc_extend.extend(desc.items)
 
 
-def fix_events(events):
+def fix_events(events: List[Event]) -> List[Event]:
     event_list = []
     for event in events:
         item_list = []
@@ -395,11 +409,11 @@ def fix_events(events):
     return event_list
 
 
-def compare_event(x, y):
+def compare_event(x: Event, y: Event) -> int:
     return int((x.start_time - y.start_time).total_seconds())
 
 
-def compare_service(x, y):
+def compare_service(x: Event, y: Event) -> int:
     service_id = x.service_id - y.service_id
     if service_id == 0:
         return int((x.start_time - y.start_time).total_seconds())
@@ -407,7 +421,7 @@ def compare_service(x, y):
         return service_id
 
 
-def parse_eit(b_type, service, tsfile, debug):
+def parse_eit(b_type: str, service: ServiceMap, tsfile: TransportStreamFile, debug: bool) -> List[Event]:
     # Event Information Table
     ids = list(service.keys())
     event_map = {}
@@ -418,13 +432,12 @@ def parse_eit(b_type, service, tsfile, debug):
             add_event(b_type, event_map, t_packet)
     print("EIT: %i packets read" % (parser.count), file=sys.stderr)
     event_list = list(event_map.values())
-    import functools
     event_list.sort(key=functools.cmp_to_key(compare_event if b_type == TYPE_DEGITAL else compare_service))
     event_list = fix_events(event_list)
     return event_list
 
 
-def parse_sdt(b_type, tsfile, debug):
+def parse_sdt(b_type: str, tsfile: TransportStreamFile, debug: bool) -> ServiceMap:
     # Service Description Table
     service_map = {}
     parser = TransportPacketParser(tsfile, SDT_PID, debug)
@@ -444,8 +457,8 @@ def parse_sdt(b_type, tsfile, debug):
     return service_map
 
 
-def parse_ts(b_type, tsfile, debug):
+def parse_ts(b_type: str, tsfile: TransportStreamFile, debug: bool) -> Tuple[ServiceMap, List[Event]]:
     service = parse_sdt(b_type, tsfile, debug)
     tsfile.seek(0)
     events = parse_eit(b_type, service, tsfile, debug)
-    return (service, events)
+    return service, events

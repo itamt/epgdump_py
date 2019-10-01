@@ -4,14 +4,19 @@ from xml.etree.ElementTree import ElementTree
 from xml.etree.ElementTree import Element
 import xml.etree.ElementTree
 import xml.dom.minidom
+from typing import List, Optional
+
+from aribtable import Event
+from customtype import ServiceMap
 
 
-def get_text(text):
+def get_text(text: Optional[str]) -> str:
     # return text.decode('utf-8') if text != None else ""
     return text if text != None else ""
 
 
-def create_xml(b_type, channel_id, service, events, filename, pretty_print, output_eid):
+def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, events: List[Event], filename: str,
+               pretty_print: bool, output_eid: bool) -> None:
     channel_el_list = create_channel(b_type, channel_id, service)
     programme_el_list = create_programme(channel_id, events, b_type, output_eid)
     attr = {
@@ -34,7 +39,7 @@ def create_xml(b_type, channel_id, service, events, filename, pretty_print, outp
     fd.close()
 
 
-def create_channel(b_type, channel_id, service):
+def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
     el_list = []
     for (service_id, (service_name, onid, tsid)) in list(service.items()):
         ch = b_type + str(service_id) if channel_id is None else channel_id
@@ -59,7 +64,7 @@ def create_channel(b_type, channel_id, service):
     return el_list
 
 
-def create_programme(channel_id, events, b_type, output_eid):
+def create_programme(channel_id: Optional[str], events: List[Event], b_type: str, output_eid: bool) -> List[Element]:
     t_format = '%Y%m%d%H%M%S +0900'
     el_list = []
     for event in events:

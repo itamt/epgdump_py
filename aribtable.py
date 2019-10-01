@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from constant import *
-import array
+from array import array as _array
+
+from constant import (
+    SDT_PID, CRC_32_MPEG,
+)
 
 
 class Section:
@@ -10,7 +13,7 @@ class Section:
         self.length_current = 0
         self.length_prev = length_prev
         self.idx = idx
-        self.data = array.array('B', (0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
+        self.data = _array('B', (0xFF, 0xFF, 0xFF, 0xFF, 0xFF))
 
 
 class TransportPacketHeader:
