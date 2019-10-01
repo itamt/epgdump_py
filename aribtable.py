@@ -83,10 +83,12 @@ class ServiceDescriptionTable:
 
 
 class Service:
-    def __init__(self, service_id, EIT_user_defined_flags, EIT_schedule_flag,
-                 EIT_present_following_flag, running_status, free_CA_mode,
-                 descriptors_loop_length):
+    def __init__(self, service_id, original_network_id, transport_stream_id,
+                 EIT_user_defined_flags, EIT_schedule_flag, EIT_present_following_flag,
+                 running_status, free_CA_mode, descriptors_loop_length):
         self.service_id = service_id  # 16 uimsbf
+        self.original_network_id = original_network_id  # 16 uimsbf
+        self.transport_stream_id = transport_stream_id  # 16 uimsbf
         self.EIT_user_defined_flags = EIT_user_defined_flags  # 3 bslbf
         self.EIT_schedule_flag = EIT_schedule_flag  # 1 bslbf
         self.EIT_present_following_flag = EIT_present_following_flag  # 1 bslbf
@@ -98,6 +100,8 @@ class Service:
     def __str__(self):
         return (
                    '  service_id=%i\n'
+                   '  original_network_id=%i\n'
+                   '  transport_stream_id=%i\n'
                    '  EIT_user_defined_flags=%i\n'
                    '  EIT_schedule_flag=%i\n'
                    '  EIT_present_following_flag=%i\n'
@@ -106,6 +110,8 @@ class Service:
                    '  descriptors_loop_length=%i\n'
                ) % (
                    self.service_id,
+                   self.original_network_id,
+                   self.transport_stream_id,
                    self.EIT_user_defined_flags,
                    self.EIT_schedule_flag,
                    self.EIT_present_following_flag,

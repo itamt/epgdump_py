@@ -333,7 +333,9 @@ def parseService(t_packet, b_packet):
         running_status = ((b_packet[idx + 3] >> 5) & 0x03)  # 3 uimsbf
         free_CA_mode = ((b_packet[idx + 3] >> 4) & 0x01)  # 1 bslbf
         descriptors_loop_length = (((b_packet[idx + 3] & 0x0F) << 8) + b_packet[idx + 4])  # 12 uimsbf
-        service = Service(service_id, EIT_user_defined_flags, EIT_schedule_flag,
+        service = Service(service_id,
+                          t_packet.sdt.original_network_id, t_packet.sdt.transport_stream_id,
+                          EIT_user_defined_flags, EIT_schedule_flag,
                           EIT_present_following_flag, running_status, free_CA_mode,
                           descriptors_loop_length)
         parseDescriptors(idx + 5, service, t_packet, b_packet)
@@ -432,7 +434,10 @@ def parse_sdt(b_type, tsfile, debug):
             if (service.EIT_schedule_flag == 1 and
                     service.EIT_present_following_flag == 1 and
                     service.descriptors[0].service_type == 0x01):
-                service_map[service.service_id] = service.descriptors[0].service_name
+                service_map[service.service_id] = (
+                    service.descriptors[0].service_name,
+                    service.original_network_id,
+                    service.transport_stream_id)
         if b_type == TYPE_DEGITAL:
             break
     print("SDT: %i packets read" % (parser.count), file=sys.stderr)
