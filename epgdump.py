@@ -64,6 +64,7 @@ for o, a in opts:
     elif o in ('-o', '--output'):
         output_file = a
     elif o in ('-p', '--print-time'):
+        # 検索用オプション
         arr = a.split(':')
         transport_stream_id = int(arr[0])
         service_id = int(arr[1])
@@ -83,8 +84,10 @@ tsfile = TransportStreamFile(input_file, 'rb')
 (service, events) = parse_ts(b_type, tsfile, debug)
 tsfile.close()
 if service_id == None:
+    # xmp出力
     xmltv.create_xml(b_type, channel_id, service, events, output_file, pretty_print, output_eid)
 else:
+    # 検索用オプション指定時の動作
     start_time = None
     end_time = None
     for event in events:

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-READ_PACKETS_MAX = 700000
+READ_PACKETS_MAX = 700000  # => 700000*188 = 131.6 MB
 
 TYPE_DEGITAL = ''
 TYPE_BS = 'BS_'

@@ -12,21 +12,24 @@ import io
 
 class TransportStreamFile(io.FileIO):
     def __next__(self):
+        """Packet iterator"""
         try:
             sync = self.read(1)
-            while ord(sync) != 0x47:
+            while ord(sync) != 0x47:  # 0x47 = top of packet
                 sync = self.read(1)
         except TypeError:
             raise StopIteration
         data = self.read(187)
         packet = array.array('B', data)
-        packet.insert(0, ord(sync))
+        packet.insert(0, ord(sync))  # 1 packet = 188 (1+187) Bytes
         if len(packet) != 188:
             raise StopIteration
         return packet
 
 
 class TransportPacketParser:
+    """セクションを含んだパケット単位で回すためのパーサー"""
+
     def __init__(self, tsfile, pid, debug=False):
         self.tsfile = tsfile
         self.pid = pid
@@ -39,21 +42,25 @@ class TransportPacketParser:
         return self
 
     def __next__(self):
+        # self.pid を持つセクションをファイル中からずっと探す
         while True:
             try:
+                # 溜まったデータを返す
                 return self.queue.pop(0)
             except IndexError:
                 pass
-            b_packet = next(self.tsfile)
+            # 以下、データを溜める
+            b_packet = next(self.tsfile)  # パケットのバイナリデータ
             self.count += 1
             if not self.debug:
                 if self.count >= READ_PACKETS_MAX:
+                    # 十分にファイル内を読んだ
                     raise StopIteration
-            header = self.parse_header(b_packet)
+            header = self.parse_header(b_packet)  # パケット先頭4バイト
             if header.pid in self.pid and header.adaptation_field_control == 1:
                 while True:
                     (next_packet, section) = self.parse_section(header, self.section_map, b_packet)
-                    if next_packet:
+                    if next_packet:  # packet ended
                         break
                     if section:
                         try:
@@ -65,6 +72,7 @@ class TransportPacketParser:
                             break
 
     def parse_header(self, b_packet):
+        """パケット先頭の4バイトであるヘッダーを返す"""
         pid = ((b_packet[1] & 0x1F) << 8) + b_packet[2]
         payload_unit_start_indicator = ((b_packet[1] >> 6) & 0x01)
         adaptation_field_control = ((b_packet[3] >> 4) & 0x03)
@@ -72,6 +80,7 @@ class TransportPacketParser:
         return TransportPacketHeader(pid, payload_unit_start_indicator, adaptation_field_control, pointer_field)
 
     def parse_section(self, header, section_map, b_packet):
+        """パケットからセクションを切り出して返す"""
         sect = None
         next_packet = False
         sect = section_map.get(header.pid, Section())
@@ -157,6 +166,7 @@ class TransportPacketParser:
 
 
 def mjd2datetime(payload):
+    """Modified Julian Dateをdatetimeに変換"""
     mjd = (payload[0] << 8) | payload[1]
     yy_ = int((mjd - 15078.2) / 365.25)
     mm_ = int((mjd - 14956.1 - int(yy_ * 365.25)) / 30.6001)
@@ -174,6 +184,7 @@ def mjd2datetime(payload):
 
 
 def bcd2time(payload):
+    """二進化十進数を時刻に変換"""
     hour = ((payload[0] & 0xF0) >> 4) * 10 + (payload[0] & 0x0F)
     minute = ((payload[1] & 0xF0) >> 4) * 10 + (payload[1] & 0x0F)
     second = ((payload[2] & 0xF0) >> 4) * 10 + (payload[2] & 0x0F)
@@ -181,8 +192,9 @@ def bcd2time(payload):
 
 
 def parseShortEventDescriptor(idx, event, t_packet, b_packet):
-    descriptor_tag = b_packet[idx]  # 8   uimsbf
-    descriptor_length = b_packet[idx + 1]  # 8   uimsbf
+    """番組内容(基本情報)をイベントに格納"""
+    descriptor_tag = b_packet[idx]  # 8 uimsbf
+    descriptor_length = b_packet[idx + 1]  # 8 uimsbf
     ISO_639_language_code = (
             chr(b_packet[idx + 2]) +
             chr(b_packet[idx + 3]) +
@@ -202,6 +214,7 @@ def parseShortEventDescriptor(idx, event, t_packet, b_packet):
 
 
 def parseExtendedEventDescriptor(idx, event, t_packet, b_packet):
+    """番組内容(詳細)をイベントに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
     descriptor_number = (b_packet[idx + 2] >> 4)  # 4 uimsbf
@@ -233,6 +246,7 @@ def parseExtendedEventDescriptor(idx, event, t_packet, b_packet):
 
 
 def parseContentDescriptor(idx, event, t_packet, b_packet):
+    """ジャンルをイベントに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
     idx += 2
@@ -258,6 +272,7 @@ def parseContentDescriptor(idx, event, t_packet, b_packet):
 
 
 def parseServiceDescriptor(idx, service, t_packet, b_packet):
+    """局情報をサービスに格納"""
     descriptor_tag = b_packet[idx]  # 8 uimsbf
     descriptor_length = b_packet[idx + 1]  # 8 uimsbf
     service_type = b_packet[idx + 2]  # 8 uimsbf
@@ -357,9 +372,9 @@ def fix_events(events):
     for event in events:
         item_list = []
         item_map = {}
-        if event.desc_short == None:
+        if event.desc_short == None:  # 正常なら少なくとも基本情報は持つ
             continue
-        if event.desc_extend != None:
+        if event.desc_extend != None:  # 詳細は追加的な情報
             for item in event.desc_extend:
                 if item.item_description_length == 0:
                     item_list[-1].item.extend(item.item)
