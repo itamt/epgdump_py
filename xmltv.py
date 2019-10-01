@@ -40,24 +40,34 @@ def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, even
 
 
 def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
+    def create_element(tag: str, attr: Optional[dict] = None, text: Optional[str] = None) -> Element:
+        el = Element(tag, attr or {})
+        if text is not None:
+            el.text = text
+        return el
+
     el_list = []
     for (service_id, (service_name, onid, tsid)) in list(service.items()):
-        ch = b_type + str(service_id) if channel_id is None else channel_id
-        attr = {'id': ch}
-        channel_el = Element('channel', attr)
-        attr = {'lang': 'ja'}
+        ch = channel_id or f"{b_type}{service_id}"
+        channel_el = create_element('channel', {'id': ch})
 
-        display_el = Element('display-name', attr)
-        display_el.text = get_text(service_name)
+        display_el = create_element('display-name', {'lang': 'ja'}, text=get_text(service_name))
         channel_el.append(display_el)
 
-        display_el = Element('display-name', attr)
-        display_el.text = ch
-        channel_el.append(display_el)
+        # display_el = create_element('display-name', {'lang': 'ja'}, text=ch)
+        # channel_el.append(display_el)
 
-        display_el = Element('display-name', attr)
-        display_el.text = ch + ' ' + get_text(service_name)
-        channel_el.append(display_el)
+        # display_el = create_element('display-name', {'lang': 'ja'}, text=ch + ' ' + get_text(service_name))
+        # channel_el.append(display_el)
+
+        tsid_el = create_element('transport_stream_id', text=str(tsid))
+        channel_el.append(tsid_el)
+
+        onid_el = create_element('original_network_id', text=str(onid))
+        channel_el.append(onid_el)
+
+        sid_el = create_element('service_id', text=str(service_id))
+        channel_el.append(sid_el)
 
         el_list.append(channel_el)
 
