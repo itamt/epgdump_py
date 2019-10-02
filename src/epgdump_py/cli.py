@@ -96,23 +96,19 @@ def process(argv: List[str]):
                 end_time = event.start_time + event.duration
                 break
         if start_time is None:
-            logger.error(
-                "not found: transport_stream_id=%d service_id=%d event_id=%d" % (
-                    transport_stream_id, service_id, event_id))
+            logger.error("not found: transport_stream_id=%d service_id=%d event_id=%d" % (
+                transport_stream_id, service_id, event_id))
             sys.exit(1)
         else:
             print(int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
 
 
 def main():
-    global logger
-
     logger = getLogger(__name__.split('.')[0])
-    log_level = 'DEBUG'
     handler = StreamHandler()
-    handler.setLevel(log_level)
+    handler.setLevel('DEBUG')
     logger.addHandler(handler)
-    logger.setLevel(log_level)
+    logger.setLevel('DEBUG')
 
     process(sys.argv[1:])
 
