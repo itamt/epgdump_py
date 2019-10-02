@@ -7,6 +7,10 @@ TYPE_DEGITAL = ''
 TYPE_BS = 'BS_'
 TYPE_CS = 'CS_'
 
+ONID_BS = 4
+ONID_CS1 = 6
+ONID_CS2 = 7
+
 EIT_PID = (0x12, 0x26, 0x27)
 SDT_PID = (0x11,)
 

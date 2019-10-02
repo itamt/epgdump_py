@@ -10,6 +10,7 @@ from .parser import TransportStreamFile, parse_ts
 from .constant import (
     TYPE_DEGITAL, TYPE_BS, TYPE_CS,
 )
+from .customtype import BType
 
 
 def create_argparser() -> argparse.ArgumentParser:
@@ -21,9 +22,9 @@ def create_argparser() -> argparse.ArgumentParser:
                                      formatter_class=argparse.RawTextHelpFormatter)
     parser.print_usage = parser.print_help  # overwrite usage by full help
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument('-b', '--bs', action='store_const', dest='b_type', const=TYPE_BS,
+    group.add_argument('-b', '--bs', action='store_const', dest='b_type', const=BType.bs,
                        help='input file is BS channel')
-    group.add_argument('-s', '--cs', action='store_const', dest='b_type', const=TYPE_CS,
+    group.add_argument('-s', '--cs', action='store_const', dest='b_type', const=BType.cs,
                        help='input file is CS channel')
     parser.add_argument('-c', '--channel-id', type=str,
                         help='specify channel identifier')
@@ -52,7 +53,7 @@ def process(argv: List[str]):
     output_file: str = args.output
     pretty_print: bool = args.format
     debug: bool = args.debug
-    b_type: str = args.b_type or TYPE_DEGITAL
+    b_type: BType = args.b_type or BType.digital
     transport_stream_id: Optional[int] = None
     service_id: Optional[int] = None
     event_id: Optional[int] = None
@@ -75,12 +76,11 @@ def process(argv: List[str]):
         argparser.print_help()
         sys.exit(1)
 
-    tsfile = TransportStreamFile(input_file, 'rb')
-    service, events = parse_ts(b_type, tsfile, debug)
-    tsfile.close()
+    with TransportStreamFile(input_file, 'rb') as tsfile:
+        service, events = parse_ts(b_type.value, tsfile, debug)
     if service_id is None:
         # xmp出力
-        xmltv.create_xml(b_type, channel_id, service, events, output_file, pretty_print, output_eid)
+        xmltv.create_xml(b_type.value, channel_id, service, events, output_file, pretty_print, output_eid)
     else:
         # 検索用オプション指定時の動作
         start_time = None

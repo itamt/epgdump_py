@@ -14,8 +14,9 @@ def get_text(text: Optional[str]) -> str:
     return text if text is not None else ''
 
 
-def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, events: List[Event], filename: str,
-               pretty_print: bool, output_eid: bool) -> None:
+def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, events: List[Event],
+               filename: Optional[str] = None,
+               pretty_print: bool = False, output_eid: bool = False) -> Optional[ElementTree]:
     channel_el_list = create_channel(b_type, channel_id, service)
     programme_el_list = create_programme(channel_id, events, b_type, output_eid)
     attr = {
@@ -28,14 +29,17 @@ def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, even
     for el in programme_el_list:
         tv_el.append(el)
 
-    if pretty_print:
-        with open(filename, mode='wb') as fd:
-            xml_str: bytes
-            xml_str = xml.etree.ElementTree.tostring(tv_el)
-            xml_str = xml.dom.minidom.parseString(xml_str).toprettyxml(indent='  ', encoding='utf-8')
-            fd.write(xml_str)
+    if filename is None:
+        return xml.etree.ElementTree.ElementTree(tv_el)
     else:
-        xml.etree.ElementTree.ElementTree(tv_el).write(filename, 'utf-8', ' ')
+        if pretty_print:
+            with open(filename, mode='wb') as fd:
+                xml_str: bytes
+                xml_str = xml.etree.ElementTree.tostring(tv_el)
+                xml_str = xml.dom.minidom.parseString(xml_str).toprettyxml(indent='  ', encoding='utf-8')
+                fd.write(xml_str)
+        else:
+            xml.etree.ElementTree.ElementTree(tv_el).write(filename, 'utf-8', ' ')
 
 
 def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
