@@ -3,6 +3,7 @@
 import sys
 import time
 import argparse
+from logging import getLogger, StreamHandler
 from typing import List, Optional
 
 from . import xmltv
@@ -11,6 +12,8 @@ from .constant import (
     TYPE_DEGITAL, TYPE_BS, TYPE_CS,
 )
 from .customtype import BType
+
+logger = getLogger(__name__)
 
 
 def create_argparser() -> argparse.ArgumentParser:
@@ -93,16 +96,24 @@ def process(argv: List[str]):
                 end_time = event.start_time + event.duration
                 break
         if start_time is None:
-            print(
+            logger.error(
                 "not found: transport_stream_id=%d service_id=%d event_id=%d" % (
-                    transport_stream_id, service_id, event_id),
-                file=sys.stderr)
+                    transport_stream_id, service_id, event_id))
             sys.exit(1)
         else:
             print(int(time.mktime(start_time.timetuple())), int(time.mktime(end_time.timetuple())))
 
 
 def main():
+    global logger
+
+    logger = getLogger(__name__.split('.')[0])
+    log_level = 'DEBUG'
+    handler = StreamHandler()
+    handler.setLevel(log_level)
+    logger.addHandler(handler)
+    logger.setLevel(log_level)
+
     process(sys.argv[1:])
 
 

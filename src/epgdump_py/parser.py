@@ -7,6 +7,7 @@ import sys
 import functools
 from datetime import datetime, timedelta
 from array import array
+from logging import getLogger
 from typing import List, Tuple, Dict, Optional
 
 from . import aribstr
@@ -22,6 +23,8 @@ from .aribtable import (
     CRC32MpegError,
 )
 from .customtype import ServiceMap
+
+logger = getLogger(__name__)
 
 
 class TransportStreamFile(io.FileIO):
@@ -81,7 +84,8 @@ class TransportPacketParser:
                             t_packet = TransportPacket(header, section.data)
                             self.queue.append(t_packet)
                         except CRC32MpegError as e:
-                            print('CRC32MpegError', e, file=sys.stderr)
+                            # logger.exception('CRC32MpegError')
+                            logger.error(f"CRC32MpegError: {e}")
                             self.section_map.pop(header.pid)
                             break
 
@@ -444,7 +448,7 @@ def parse_eit(b_type: str, service: ServiceMap, tsfile: TransportStreamFile, deb
         if t_packet.eit.service_id in ids:
             parseEvents(t_packet, t_packet.binary_data)
             add_event(b_type, event_map, t_packet)
-    print("EIT: %i packets read" % (parser.count), file=sys.stderr)
+    logger.debug("EIT: %i packets read" % (parser.count))
     event_list = list(event_map.values())
     event_list.sort(key=functools.cmp_to_key(compare_event if b_type == TYPE_DEGITAL else compare_service))
     event_list = fix_events(event_list)
@@ -467,7 +471,7 @@ def parse_sdt(b_type: str, tsfile: TransportStreamFile, debug: bool) -> ServiceM
                     service.transport_stream_id)
         if b_type == TYPE_DEGITAL:
             break
-    print("SDT: %i packets read" % (parser.count), file=sys.stderr)
+    logger.debug("SDT: %i packets read" % (parser.count))
     return service_map
 
 
