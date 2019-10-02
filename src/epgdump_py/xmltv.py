@@ -45,7 +45,8 @@ def create_xml(b_type: str, channel_id: Optional[str], service: ServiceMap, even
 def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) -> List[Element]:
     el_list = []
     for service_id, (service_name, onid, tsid) in service.items():
-        ch = channel_id or f"{b_type}{service_id}"
+        # ch = channel_id or f"{b_type}{service_id}"
+        ch = f"{b_type}{service_id}"
         channel_el = create_element('channel', {'id': ch})
 
         display_el = create_element('display-name', {'lang': 'ja'}, text=get_text(service_name))
@@ -73,10 +74,11 @@ def create_channel(b_type: str, channel_id: Optional[str], service: ServiceMap) 
 
 def create_programme(channel_id: Optional[str], events: List[Event], b_type: str, output_eid: bool) -> List[Element]:
     t_format = '%Y%m%d%H%M%S +0900'
+
     el_list = []
     for event in events:
-
-        ch = channel_id or f"{b_type}{event.service_id}"
+        # ch = channel_id or f"{b_type}{event.service_id}"
+        ch = f"{b_type}{event.service_id}"
         start = event.start_time.strftime(t_format)
         stop = (event.start_time + event.duration).strftime(t_format)
         programme_el = create_element('programme', {'start': start, 'stop': stop, 'channel': ch})
@@ -108,6 +110,7 @@ def create_programme(channel_id: Optional[str], events: List[Event], b_type: str
             for category_text in category_list:
                 category_el_1 = create_element('category', attr, text=category_text)
                 programme_el.append(category_el_1)
+
         if output_eid:
             el = create_element('transport-stream-id', text=str(event.transport_stream_id))
             programme_el.append(el)
